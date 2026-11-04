@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app.dart';
 import 'core/constants/supabase_config.dart';
+import 'features/auth/data/auth_repository.dart';
+import 'features/auth/state/auth_scope.dart';
 import 'features/places/data/places_repository.dart';
 
 Future<void> main() async {
@@ -19,6 +21,12 @@ Future<void> main() async {
     throw StateError('Could not initialize Supabase. Check config.json.');
   }
 
-  final repository = PlacesRepository.supabase(Supabase.instance.client);
-  runApp(SacredCompassApp(loadPlaces: repository.fetchPublishedPlaces));
+  final client = Supabase.instance.client;
+  final places = PlacesRepository.supabase(client);
+  runApp(
+    AuthScope(
+      repository: AuthRepository.supabase(client),
+      child: SacredCompassApp(loadPlaces: places.fetchPublishedPlaces),
+    ),
+  );
 }
