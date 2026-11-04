@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../features/places/models/place.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
 class SacredCompassApp extends StatelessWidget {
-  const SacredCompassApp({super.key});
+  const SacredCompassApp({required this.loadPlaces, super.key});
+
+  final Future<List<Place>> Function() loadPlaces;
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +16,7 @@ class SacredCompassApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      routes: AppRouter.routes,
+      routes: AppRouter.routes(loadPlaces),
     );
   }
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../placeholder_home_screen.dart';
+import '../../features/places/models/place.dart';
+import '../../features/places/presentation/places_screen.dart';
 
 class AppRouter {
-  static final routes = <String, WidgetBuilder>{
-    Navigator.defaultRouteName: (_) => const PlaceholderHomeScreen(),
+  static Map<String, WidgetBuilder> routes(
+    Future<List<Place>> Function() loadPlaces,
+  ) => {
+    Navigator.defaultRouteName: (_) => PlacesScreen(loadPlaces: loadPlaces),
   };
 }
