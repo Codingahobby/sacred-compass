@@ -25,61 +25,63 @@ class _PlacesScreenState extends State<PlacesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Sacred Compass')),
-      body: FutureBuilder<List<Place>>(
-        future: _places,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(
-              child: CircularProgressIndicator(
-                semanticsLabel: 'Loading places',
-              ),
-            );
-          }
-          if (snapshot.hasError) {
-            final error = snapshot.error;
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      error is PlacesLoadException
-                          ? error.message
-                          : 'Could not load places. Please try again.',
-                      textAlign: TextAlign.center,
-                    ),
-                    TextButton(
-                      onPressed: () => setState(() {
-                        _places = widget.loadPlaces();
-                      }),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          final places = snapshot.requireData;
-          if (places.isEmpty) {
-            return const Center(child: Text('No published places found.'));
-          }
-          return ListView.builder(
-            itemCount: places.length,
-            itemBuilder: (context, index) {
-              final place = places[index];
-              final location = [place.country, ?place.region].join(' · ');
-              final summary = place.summary;
-              return ListTile(
-                title: Text(place.name),
-                subtitle: Text(
-                  summary == null ? location : '$summary\n$location',
+      body: SafeArea(
+        child: FutureBuilder<List<Place>>(
+          future: _places,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  semanticsLabel: 'Loading places',
                 ),
               );
-            },
-          );
-        },
+            }
+            if (snapshot.hasError) {
+              final error = snapshot.error;
+              return Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        error is PlacesLoadException
+                            ? error.message
+                            : 'Could not load places. Please try again.',
+                        textAlign: TextAlign.center,
+                      ),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _places = widget.loadPlaces();
+                        }),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final places = snapshot.requireData;
+            if (places.isEmpty) {
+              return const Center(child: Text('No published places found.'));
+            }
+            return ListView.builder(
+              itemCount: places.length,
+              itemBuilder: (context, index) {
+                final place = places[index];
+                final location = [place.country, ?place.region].join(' · ');
+                final summary = place.summary;
+                return ListTile(
+                  title: Text(place.name),
+                  subtitle: Text(
+                    summary == null ? location : '$summary\n$location',
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

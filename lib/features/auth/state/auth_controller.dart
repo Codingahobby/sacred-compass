@@ -28,6 +28,7 @@ class AuthController extends ChangeNotifier {
     _subscription = repository.authChanges.listen(
       (change) => _updateUser(change.session?.user),
       onError: (Object _, StackTrace _) {
+        _user = repository.currentSession?.user;
         _status = AuthStatus.error;
         notifyListeners();
       },

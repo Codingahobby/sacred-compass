@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sacred_compass/app/app.dart';
+import 'package:sacred_compass/features/auth/state/auth_scope.dart';
 import 'package:sacred_compass/features/auth/data/auth_repository.dart';
 import 'package:sacred_compass/features/auth/state/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -89,6 +91,20 @@ void main() {
   tearDown(() async {
     controller.dispose();
     await auth.changes.close();
+  });
+
+  testWidgets('a restored session opens discovery directly', (tester) async {
+    auth.currentSession = session;
+    await tester.pumpWidget(
+      AuthScope(
+        repository: repository,
+        child: SacredCompassApp(loadPlaces: () async => []),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No published places found.'), findsOneWidget);
+    expect(find.text('Find places that move you.'), findsNothing);
   });
 
   test('starts initializing and becomes a guest without a session', () {
@@ -216,4 +232,54 @@ void main() {
     response.complete({'id': user.id});
     expect(await pending, isNull);
   });
+
+  test('an auth stream error reconciles a cleared SDK session', () {
+    auth.currentSession = session;
+    controller.start();
+    expect(controller.user, same(user));
+
+    auth.currentSession = null;
+    auth.changes.addError(StateError('Refresh failed after the session ended'));
+    expect(controller.status, AuthStatus.error);
+    expect(controller.user, isNull);
+  });
+
+  test('disposing the controller removes its auth subscription', () {
+    final listener = AuthController(repository)..start();
+    expect(auth.changes.hasListener, isTrue);
+    listener.dispose();
+    expect(auth.changes.hasListener, isFalse);
+    auth.changes.addError(StateError('An error after disposal'));
+  });
+
+  test(
+    'discards an old profile when the account changes during the request',
+    () async {
+      auth.currentSession = session;
+      final response = Completer<Map<String, dynamic>?>();
+      loadProfile = (_) => response.future;
+      final pending = repository.fetchCurrentProfile();
+
+      const other = User(
+        id: 'another-user',
+        appMetadata: {},
+        userMetadata: {},
+        aud: 'authenticated',
+        createdAt: '2026-11-05T00:00:00Z',
+      );
+      auth.currentSession = Session(
+        accessToken: '',
+        tokenType: 'bearer',
+        user: other,
+      );
+      response.complete({
+        'id': user.id,
+        'display_name': 'Previous account',
+        'avatar_path': null,
+        'created_at': '2026-11-04T00:00:00Z',
+        'updated_at': '2026-11-04T00:00:00Z',
+      });
+      expect(await pending, isNull);
+    },
+  );
 }

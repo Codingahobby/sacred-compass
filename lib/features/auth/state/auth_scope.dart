@@ -9,8 +9,10 @@ class AuthScope extends StatefulWidget {
   final AuthRepository repository;
   final Widget child;
 
-  static AuthController of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<_AuthState>()!.notifier!;
+  static AuthController of(BuildContext context) => maybeOf(context)!;
+
+  static AuthController? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_AuthState>()?.notifier;
 
   @override
   State<AuthScope> createState() => _AuthScopeState();
